@@ -4,7 +4,7 @@ Un escáner OCR para pantallas, potenciado por el motor nativo de **Windows 10/1
 
 ## ¿De qué va esto?
 
-Este programa es la versión "minimalista" y de bajo consumo de mi otro proyecto (PaddleOCR Scanner). Mientras que el otro usa motores un poco más pesados (y mejor entrenados, debo decir ah), **WinOCR Scanner** aprovecha la tecnología que ya tenés instalada en tu Windows.
+Este programa es la versión "minimalista" y de bajo consumo de mi otro proyecto ( [PaddleOCR Scanner](https://www.github.com/kevohiggins/PaddleOCRScanner/). Mientras que el otro usa motores un poco más pesados (y mejor entrenados, debo decir ah), **WinOCR Scanner** aprovecha la tecnología que ya tenés instalada en tu Windows.
 
 Está diseñado para ser instantáneo: captura lo que tenés en pantalla y te permite navegar el texto detectado con el teclado, simulando un "cursor virtual" sobre los elementos.
 
