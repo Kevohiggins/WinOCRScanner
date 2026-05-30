@@ -55,9 +55,27 @@ class Translator:
                     self._available_languages.update(json.load(f))
             except: pass
 
-    def ensure_initialized(self):
+    def ensure_initialized(self, active_service=None):
         if self._initialized or self._initializing: return
         self._initializing = True
+        
+        # Determine service for pre-acceleration (dynamic)
+        service_to_warm = active_service
+        if not service_to_warm:
+            try:
+                from .config import load_config
+                cfg = load_config()
+                service_to_warm = cfg.get("global", {}).get("translate_service", "google")
+            except:
+                service_to_warm = "google"
+
+        # Pre-cache session dynamically to reduce latency
+        try:
+            import translators as ts
+            print(f"[Translator] Pre-accelerating {service_to_warm}...", flush=True)
+            threading.Thread(target=ts.pre_accelerate, args=([service_to_warm],), daemon=True).start()
+        except: pass
+
         threading.Thread(target=self._initialize, daemon=True).start()
 
     def _initialize(self):
