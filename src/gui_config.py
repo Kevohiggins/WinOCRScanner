@@ -325,7 +325,7 @@ class ConfigWindow(wx.Dialog):
         self.trans_service.Show(is_online)
         self.trans_swap.Show(is_online)
         
-        current_from_code = "ja"
+        current_from_code = "en"
         current_to_code = "es"
         if hasattr(self, 'current_trans_codes') and self.trans_from.GetSelection() != wx.NOT_FOUND:
             try:
@@ -444,6 +444,7 @@ class ConfigWindow(wx.Dialog):
         self.check_dil.SetValue(c.get("use_dilation", False))
 
         self.shadow_burst.SetValue(int(c.get("shadow_burst_count", 4)))
+        self.check_updates.SetValue(c.get("auto_check_updates", True))
         self.check_rescan.SetValue(c.get("auto_rescan_after_click", False))
         self.rescan_delay.SetValue(int(c.get("auto_rescan_delay", 5)))
 
@@ -466,7 +467,7 @@ class ConfigWindow(wx.Dialog):
         self.trans_service.SetStringSelection(c.get("translate_service", "google"))
         self.trans_swap.SetValue(c.get("translate_swap", False))
         
-        f_code = c.get("translate_from", "ja"); t_code = c.get("translate_to", "es")
+        f_code = c.get("translate_from", "en"); t_code = c.get("translate_to", "es")
         if f_code in self.trans_codes: self.trans_from.SetSelection(self.trans_codes.index(f_code))
         if t_code in self.trans_codes: self.trans_to.SetSelection(self.trans_codes.index(t_code))
         
@@ -513,5 +514,7 @@ class ConfigWindow(wx.Dialog):
 
 def show_config_window(full_config, current_profile="Global", active_app="", restart_callback=None):
     dlg = ConfigWindow(None, full_config, current_profile, active_app=active_app, restart_callback=restart_callback)
+    if dlg.ShowModal() == wx.ID_OK: return dlg.full_config
+    return Nonet_callback=restart_callback)
     if dlg.ShowModal() == wx.ID_OK: return dlg.full_config
     return None

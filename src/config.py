@@ -31,7 +31,7 @@ DEFAULT_CONFIG = {
         "ocr_language": get_system_ocr_lang(),
         "min_confidence": 0.3,
         "image_scale": 1.0,
-        "auto_check_updates": False,
+        "auto_check_updates": True,
         "hotkey_screen": "ctrl+alt+s",
         "hotkey_window": "ctrl+alt+w",
         "hotkey_config": "ctrl+alt+c",
@@ -51,7 +51,7 @@ DEFAULT_CONFIG = {
         "key_double": "shift+enter",
         "key_right": "apps",
         "key_exit": "esc",
-        "translate_enabled": True,
+        "translate_enabled": False,
         "translate_to": "es",
         "translate_from": "en", # Inglés a Español es lo más común
         "hotkey_shadow_learn": "ctrl+alt+l",
@@ -68,7 +68,7 @@ DEFAULT_CONFIG = {
         "auto_rescan_after_click": False,
         "auto_rescan_delay": 5,
         "hotkey_toggle_auto_rescan": "ctrl+alt+a",
-        "translate_type": "local",
+        "translate_type": "disabled",
         "translate_service": "google",
         "translate_swap": False,
         "dynamic_interrupt": False

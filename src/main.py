@@ -142,7 +142,7 @@ class WinOCRScanner:
             
             translator_instance.set_on_ready_callback(lambda: self.tts.speak("Motor de traducción listo.") if self.config.get("translate_enabled") else None)
             
-            if self.config.get("translate_type", "local") == "local" and self.config.get("translate_enabled"):
+            if self.config.get("translate_type", "disabled") == "local" and self.config.get("translate_enabled"):
                 self.tts.speak("Iniciando motor de traducción.")
                 translator_instance.ensure_initialized()
         except Exception as e:
@@ -371,11 +371,11 @@ class WinOCRScanner:
                     if new_texts:
                         new_text = " ".join(new_texts)
                         if self.config.get("translate_enabled"):
-                            from_code = self.config.get("translate_from", "ja")
+                            from_code = self.config.get("translate_from", "en")
                             to_code = self.config.get("translate_to", "es")
                             new_text = translator_instance.translate(
                                 new_text, from_code, to_code, 
-                                translate_type=self.config.get("translate_type", "local"),
+                                translate_type=self.config.get("translate_type", "disabled"),
                                 service=self.config.get("translate_service", "google"),
                                 swap=self.config.get("translate_swap", False)
                             )
@@ -387,11 +387,11 @@ class WinOCRScanner:
                     if full_text and SequenceMatcher(None, prev_text, full_text).ratio() < threshold:
                         prev_text = full_text
                         if self.config.get("translate_enabled"):
-                            from_code = self.config.get("translate_from", "ja")
+                            from_code = self.config.get("translate_from", "en")
                             to_code = self.config.get("translate_to", "es")
                             full_text = translator_instance.translate(
                                 full_text, from_code, to_code, 
-                                translate_type=self.config.get("translate_type", "local"),
+                                translate_type=self.config.get("translate_type", "disabled"),
                                 service=self.config.get("translate_service", "google"),
                                 swap=self.config.get("translate_swap", False)
                             )
@@ -463,7 +463,7 @@ class WinOCRScanner:
             msg = "Guardado."
             if old_trans != new_trans:
                 msg += " Traducción " + ("activada." if new_trans else "desactivada.")
-                if new_trans and self.config.get("translate_type", "local") == "local":
+                if new_trans and self.config.get("translate_type", "disabled") == "local":
                     translator_instance.ensure_initialized()
             
             translator_instance.refresh_languages()

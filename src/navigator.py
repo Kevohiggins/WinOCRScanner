@@ -206,7 +206,7 @@ class ElementNavigator:
                 to_code = self.config.get("translate_to", "es")
                 text = translator_instance.translate(
                     text, from_code, to_code, 
-                    translate_type=self.config.get("translate_type", "local"),
+                    translate_type=self.config.get("translate_type", "disabled"),
                     service=self.config.get("translate_service", "google"),
                     swap=self.config.get("translate_swap", False)
                 )
