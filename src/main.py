@@ -65,10 +65,12 @@ class TrayIcon(wx.adv.TaskBarIcon):
         menu = wx.Menu()
         help_item = menu.Append(wx.ID_ANY, "Ayuda")
         config_item = menu.Append(wx.ID_ANY, "Configuración")
+        update_item = menu.Append(wx.ID_ANY, "Buscar Actualizaciones")
         exit_item = menu.Append(wx.ID_ANY, "Salir")
         
         self.Bind(wx.EVT_MENU, self.on_help, help_item)
         self.Bind(wx.EVT_MENU, self.on_config, config_item)
+        self.Bind(wx.EVT_MENU, self.on_update, update_item)
         self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         return menu
 
@@ -80,6 +82,10 @@ class TrayIcon(wx.adv.TaskBarIcon):
 
     def on_config(self, event):
         self.scanner._on_open_config()
+
+    def on_update(self, event):
+        from updater import check_updates_async
+        check_updates_async(None)
 
     def on_exit(self, event):
         self.scanner._on_quit_hotkey()
@@ -124,8 +130,13 @@ class WinOCRScanner:
 
     def start(self):
         self.tts.play_startup()
-        self.tts.speak(f"Cargando WinOCR Scanner versión {VERSION}.")
+        self.tts.speak(f"Iniciando WinOCR Scanner versión {VERSION}.")
         
+        # Buscar actualizaciones automáticamente si está habilitado
+        if self.config.get("auto_check_updates", True):
+            from updater import check_updates_async
+            wx.CallLater(5000, check_updates_async, None, True)
+            
         try:
             self.ocr.initialize()
             
@@ -227,10 +238,11 @@ class WinOCRScanner:
         self.tts.speak(f"Reescaneo automático {state}.")
 
     def _release_modifiers(self):
-        for vk in [0x11, 0x12, 0x10, 0x5B, 0x5C]: ctypes.windll.user32.keybd_event(vk, 0, 0x0002, 0)
-        time.sleep(0.1)
+        def _do_release():
+            for vk in [0x11, 0x12, 0x10, 0x5B, 0x5C]: ctypes.windll.user32.keybd_event(vk, 0, 0x0002, 0)
+        threading.Thread(target=_do_release, daemon=True).start()
 
-    def _on_learn_shadow(self): self._release_modifiers(); threading.Thread(target=self._do_burst_learning, daemon=True).start()
+    def _on_learn_shadow(self): threading.Thread(target=self._do_burst_learning, daemon=True).start()
 
     def _do_burst_learning(self):
         app_name = self._get_current_app_name(); self.shadow.set_app(app_name)
@@ -252,12 +264,24 @@ class WinOCRScanner:
     def _on_toggle_shadow(self): self._release_modifiers(); state = self.shadow.toggle(); self.tts.speak("Sombra activa." if state else "Sombra inactiva.")
 
     def _on_scan_screen(self): 
-        self._release_modifiers(); self._update_profile()
-        self.tts.speak("Escaneando pantalla."); self._start_scan("screen")
+        img, ox, oy = capture_screen()
+        if np.mean(img[::10, ::10]) < 0.1:
+            self.tts.play_error()
+            self.tts.speak("Es necesario desactivar la cortina de pantalla antes de escanear.")
+            threading.Thread(target=self._release_modifiers, daemon=True).start()
+            return
+        self.tts.speak("Escaneando pantalla."); self._release_modifiers(); self._update_profile()
+        self._start_scan("screen", img_data=(img, ox, oy))
 
     def _on_scan_window(self): 
-        self._release_modifiers(); self._update_profile()
-        self.tts.speak("Escaneando ventana."); self._start_scan("window")
+        img, ox, oy = capture_active_window()
+        if np.mean(img[::10, ::10]) < 0.1:
+            self.tts.play_error()
+            self.tts.speak("Es necesario desactivar la cortina de pantalla antes de escanear.")
+            threading.Thread(target=self._release_modifiers, daemon=True).start()
+            return
+        self.tts.speak("Escaneando ventana."); self._release_modifiers(); self._update_profile()
+        self._start_scan("window", img_data=(img, ox, oy))
 
     def _apply_crops(self, img, ox, oy):
         h, w = img.shape[:2]
@@ -272,6 +296,11 @@ class WinOCRScanner:
         if self.is_dynamic_running:
             self.is_dynamic_running = False; self.tts.play_error(); self.tts.speak("Escaneo dinámico detenido.")
         else:
+            img, ox, oy = capture_active_window() if self.config.get("dynamic_target") == "window" else capture_screen()
+            if np.mean(img) < 0.1:
+                self.tts.play_error()
+                self.tts.speak("Es necesario desactivar la cortina de pantalla antes de escanear.")
+                return
             self._update_profile(); self.is_dynamic_running = True
             self.tts.play_scan_start(); self.tts.speak("Escaneo dinámico activado.")
             threading.Thread(target=self._dynamic_scan_loop, daemon=True).start()
@@ -285,6 +314,11 @@ class WinOCRScanner:
             try:
                 self._update_profile()
                 img, ox, oy = capture_active_window() if self.config.get("dynamic_target") == "window" else capture_screen()
+                
+                if np.mean(img) < 0.1:
+                    time.sleep(1.0)
+                    continue
+
                 img, ox, oy = self._apply_crops(img, ox, oy)
 
                 sens_val = int(self.config.get("dynamic_sensitivity", 50))
@@ -368,15 +402,23 @@ class WinOCRScanner:
             remaining = max(0, float(self.config.get("dynamic_interval", 1.0)) - elapsed)
             time.sleep(remaining)
 
-    def _start_scan(self, mode):
+    def _start_scan(self, mode, img_data=None):
         if self._scan_lock.locked(): return
-        threading.Thread(target=self._do_scan, args=(mode,), daemon=True).start()
+        threading.Thread(target=self._do_scan, args=(mode, img_data), daemon=True).start()
 
-    def _do_scan(self, mode):
+    def _do_scan(self, mode, img_data=None):
         with self._scan_lock:
             try:
                 self.tts.play_scan_start()
-                img, ox, oy = capture_active_window() if mode == "window" else capture_screen()
+                if img_data:
+                    img, ox, oy = img_data
+                else:
+                    img, ox, oy = capture_active_window() if mode == "window" else capture_screen()
+                    if np.mean(img) < 0.1:
+                        self.tts.play_error()
+                        self.tts.speak("Es necesario desactivar la cortina de pantalla antes de escanear.")
+                        return
+
                 img, ox, oy = self._apply_crops(img, ox, oy)
                 raw = self.ocr.scan_image(img); self._last_elements = raw
                 elements = self.shadow.filter_elements(raw)
