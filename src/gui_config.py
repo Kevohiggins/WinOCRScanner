@@ -187,7 +187,10 @@ class ConfigWindow(wx.Dialog):
         
         sizer.Add(grid, 0, wx.EXPAND | wx.ALL, 20)
         
-        # Opciones de Reescaneo
+        # Opciones de Actualización y Reescaneo
+        self.check_updates = wx.CheckBox(self.tab_general, label="Buscar actualizaciones automáticamente al iniciar")
+        sizer.Add(self.check_updates, 0, wx.ALL, 20)
+        
         sizer.Add(wx.StaticLine(self.tab_general), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 20)
         self.check_rescan = wx.CheckBox(self.tab_general, label="Reescanear automáticamente tras hacer click")
         sizer.Add(self.check_rescan, 0, wx.ALL, 20)
@@ -486,6 +489,7 @@ class ConfigWindow(wx.Dialog):
         self.temp_config["use_dilation"] = self.check_dil.GetValue()
 
         self.temp_config["shadow_burst_count"] = self.shadow_burst.GetValue()
+        self.temp_config["auto_check_updates"] = self.check_updates.GetValue()
         self.temp_config["auto_rescan_after_click"] = self.check_rescan.GetValue()
         self.temp_config["auto_rescan_delay"] = self.rescan_delay.GetValue()
 
@@ -514,7 +518,5 @@ class ConfigWindow(wx.Dialog):
 
 def show_config_window(full_config, current_profile="Global", active_app="", restart_callback=None):
     dlg = ConfigWindow(None, full_config, current_profile, active_app=active_app, restart_callback=restart_callback)
-    if dlg.ShowModal() == wx.ID_OK: return dlg.full_config
-    return Nonet_callback=restart_callback)
     if dlg.ShowModal() == wx.ID_OK: return dlg.full_config
     return None

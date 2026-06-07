@@ -16,7 +16,7 @@ import win32process
 import psutil
 from difflib import SequenceMatcher
 
-from config import load_config, save_config, CONFIG_FILE, get_effective_config, VERSION
+from config import load_config, save_config, CONFIG_FILE, get_effective_config, VERSION, get_base_path
 from tts_engine import TTSEngine
 from ocr_engine import OCREngine
 from screen_capture import capture_screen, capture_active_window
