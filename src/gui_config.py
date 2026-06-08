@@ -151,7 +151,10 @@ class ConfigWindow(wx.Dialog):
             if not translator_instance._initialized and not translator_instance._initializing:
                 translator_instance.ensure_initialized()
                 def safe_update():
-                    if self: self.update_trans_ui()
+                    try:
+                        if self and bool(self): self.update_trans_ui()
+                    except RuntimeError:
+                        pass
                 wx.CallLater(2000, safe_update)
         event.Skip()
 
@@ -371,12 +374,35 @@ class ConfigWindow(wx.Dialog):
         else:
             self.btn_download.Disable(); self.trans_status.SetLabel("Estado: Descargando...")
             def run():
-                def up(msg, p): wx.CallAfter(self.trans_status.SetLabel, f"Estado: {msg}"); wx.CallAfter(self.trans_prog.SetValue, p)
+                def up(msg, p): 
+                    try:
+                        if self and bool(self):
+                            wx.CallAfter(self.trans_status.SetLabel, f"Estado: {msg}")
+                            wx.CallAfter(self.trans_prog.SetValue, p)
+                    except RuntimeError:
+                        pass
+                
+                def safe_on_download_complete():
+                    try:
+                        if self and bool(self): self.on_download_complete()
+                    except RuntimeError:
+                        pass
+                
+                def safe_update_trans_ui():
+                    try:
+                        if self and bool(self):
+                            self.btn_download.Enable()
+                            self.update_trans_ui()
+                    except RuntimeError:
+                        pass
+
                 if translator_instance.download_model(f_code, t_code, up):
-                    wx.CallAfter(self.on_download_complete)
+                    wx.CallAfter(safe_on_download_complete)
                 else:
-                    wx.CallAfter(lambda: wx.MessageBox("Error en descarga.", "Error", parent=self))
-                wx.CallAfter(self.btn_download.Enable); wx.CallAfter(self.update_trans_ui)
+                    try:
+                        if self and bool(self): wx.CallAfter(lambda: wx.MessageBox("Error en descarga.", "Error", parent=self))
+                    except RuntimeError: pass
+                wx.CallAfter(safe_update_trans_ui)
             threading.Thread(target=run, daemon=True).start()
 
     def on_download_complete(self):

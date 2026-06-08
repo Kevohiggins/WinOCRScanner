@@ -16,8 +16,8 @@ def capture_screen(monitor_index: int = 1) -> tuple[np.ndarray, int, int]:
     monitor = sct.monitors[monitor_index]
     screenshot = sct.grab(monitor)
     
-    # 1. CERO COPIAS: Leemos la memoria RAM cruda (instantáneo)
-    img_bgra = np.frombuffer(screenshot.bgra, dtype=np.uint8).reshape((monitor["height"], monitor["width"], 4))
+    # 1. CERO COPIAS: Leemos la memoria RAM cruda (instantáneo). Dimensiones sacadas de screenshot para evitar ValueError
+    img_bgra = np.frombuffer(screenshot.bgra, dtype=np.uint8).reshape((screenshot.height, screenshot.width, 4))
     
     # 2. Extraemos los 3 colores (BGR) usando C++ ultra optimizado
     # ¡No lo pasamos a RGB! A OpenCV y RapidOCR les gusta el BGR.
@@ -44,8 +44,8 @@ def capture_active_window() -> tuple[np.ndarray, int, int]:
     region = {"left": x, "top": y, "width": width, "height": height}
     screenshot = sct.grab(region)
     
-    # 1. CERO COPIAS
-    img_bgra = np.frombuffer(screenshot.bgra, dtype=np.uint8).reshape((height, width, 4))
+    # 1. CERO COPIAS. Dimensiones de screenshot reales para evitar crash por bordes invisibles de Windows
+    img_bgra = np.frombuffer(screenshot.bgra, dtype=np.uint8).reshape((screenshot.height, screenshot.width, 4))
     
     # 2. Extracción a BGR
     img = cv2.cvtColor(img_bgra, cv2.COLOR_BGRA2BGR)

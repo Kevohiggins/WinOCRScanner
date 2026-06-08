@@ -1,8 +1,3 @@
-"""
-Motor OCR ligero basado en el reconocimiento de texto nativo de Windows (WinRT).
-Ahorro masivo de RAM, CPU y espacio de almacenamiento.
-"""
-
 import logging
 import os
 from dataclasses import dataclass
@@ -144,8 +139,9 @@ class OCREngine:
                 kernel = np.ones((2,2), np.uint8)
                 process_image = cv2.dilate(process_image, kernel, iterations=1)
 
-            # WinOCR (WinRT) acepta imágenes en gris o color, 
-            # pero por consistencia si lo pasamos a B&W lo mantenemos así.
+            # Reconversión a BGR para asegurar compatibilidad con winocr/WinRT que pueden esperar 3 canales.
+            if len(process_image.shape) == 2:
+                process_image = cv2.cvtColor(process_image, cv2.COLOR_GRAY2BGR)
         # ---------------------------------------------------------
 
         try:

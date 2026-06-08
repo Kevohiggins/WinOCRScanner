@@ -257,7 +257,7 @@ class WinOCRScanner:
             time.sleep(1.0)
         count = self.shadow.learn_from_burst(burst_results)
         if count > 0:
-            self.full_config = load_config(); self.tts.play_scan_success(); self.tts.speak(f"Completado. {count} sombras fijadas.")
+            self.tts.play_scan_success(); self.tts.speak(f"Completado. {count} sombras fijadas.")
         else: self.tts.play_error(); self.tts.speak("Sin sombras nuevas.")
 
     def _on_clear_shadow(self): self._release_modifiers(); self.shadow.clear(); self.tts.speak("Sombras borradas.")
@@ -476,14 +476,6 @@ class WinOCRScanner:
             try: self.active_navigator._stop()
             except: pass
         if self.app: wx.CallAfter(self.app.ExitMainLoop)
-
-    def restart_app(self):
-        import subprocess
-        self.is_dynamic_running = False
-        executable = sys.executable
-        args = sys.argv
-        subprocess.Popen([executable] + args)
-        os._exit(0)
 
 def check_single_instance():
     current_pid = os.getpid()

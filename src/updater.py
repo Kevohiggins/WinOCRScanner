@@ -14,7 +14,7 @@ def check_updates_async(parent, silent=False):
         url = f"https://api.github.com/repos/{REPO}/releases/latest"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'WinOCRScanner-Updater'})
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode())
                 latest_tag = "".join([c for c in data.get("tag_name", "") if c.isdigit() or c == '.'])
                 
@@ -59,7 +59,7 @@ def download_update(parent, data):
     def run():
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'WinOCRScanner-Updater'})
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req, timeout=30) as response:
                 total_size = int(response.headers.get('content-length', 0))
                 downloaded = 0
                 chunk_size = 8192
@@ -68,6 +68,7 @@ def download_update(parent, data):
                 base_path = get_base_path()
                 zip_path = os.path.join(base_path, "update.zip")
                 
+                last_percent = -1
                 with open(zip_path, 'wb') as f:
                     while True:
                         chunk = response.read(chunk_size)
@@ -77,8 +78,10 @@ def download_update(parent, data):
                         downloaded += len(chunk)
                         if total_size > 0:
                             percent = int(downloaded * 100 / total_size)
-                            wx.CallAfter(prog.Update, percent, f"Descargando: {percent}%")
-                            
+                            if percent > last_percent:
+                                last_percent = percent
+                                wx.CallAfter(prog.Update, percent, f"Descargando: {percent}%")
+                                
                 wx.CallAfter(prog.Destroy)
                 wx.CallAfter(apply_update, base_path, zip_path)
         except Exception as e:
@@ -104,6 +107,7 @@ def apply_update(base_path, zip_path):
         exe_name = "WinOCR Scanner.exe"
         
         bat_content = f"""@echo off
+chcp 65001 > nul
 set "EXE_NAME={exe_name}"
 
 :wait_loop
