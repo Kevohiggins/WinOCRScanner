@@ -73,13 +73,12 @@ class ConfigWindow(wx.Dialog):
         "hotkey_manual": "Abrir Manual", "hotkey_toggle_auto_rescan": "Alternar Reescaneo"
     }
 
-    def __init__(self, parent, full_config, current_profile="Global", active_app="", restart_callback=None):
-        super().__init__(parent, title="Configuración de WinOCR Scanner", size=(650, 580))
+    def __init__(self, parent, full_config, current_profile="Global", active_app=""):
+        super().__init__(parent, title="Configuración de WinOCRScanner", size=(650, 600))
         self.full_config = full_config
         self.current_profile = current_profile
         self.active_app = active_app
         self.temp_config = full_config["profiles"].get(current_profile, full_config["global"]).copy()
-        self.restart_callback = restart_callback
         self.is_delete_mode = False
         
         from translator import translator_instance
@@ -542,7 +541,7 @@ class ConfigWindow(wx.Dialog):
         else: self.full_config["profiles"][self.current_profile] = self.temp_config.copy()
         save_config(self.full_config); self.EndModal(wx.ID_OK)
 
-def show_config_window(full_config, current_profile="Global", active_app="", restart_callback=None):
-    dlg = ConfigWindow(None, full_config, current_profile, active_app=active_app, restart_callback=restart_callback)
+def show_config_window(full_config, current_profile="Global", active_app=""):
+    dlg = ConfigWindow(None, full_config, current_profile, active_app=active_app)
     if dlg.ShowModal() == wx.ID_OK: return dlg.full_config
     return None

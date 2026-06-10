@@ -450,7 +450,7 @@ class WinOCRScanner:
     def _open_config_native(self):
         from gui_config import show_config_window
         app_name = self._get_current_app_name()
-        res = show_config_window(self.full_config, self._last_profile, active_app=app_name, restart_callback=self.restart_app)
+        res = show_config_window(self.full_config, self._last_profile, active_app=app_name)
         if res:
             old_trans = self.config.get("translate_enabled", False)
             self.full_config = res
