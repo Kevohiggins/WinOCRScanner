@@ -24,7 +24,7 @@ def get_system_ocr_lang():
     return "en" # Default seguro
 
 CONFIG_FILE = os.path.join(get_base_path(), "config.json")
-VERSION = "1.1"
+VERSION = "1.3"
 
 DEFAULT_CONFIG = {
     "global": {

@@ -5,9 +5,21 @@ import sys
 import threading
 import wx
 import subprocess
+import re
 from config import VERSION
 
 REPO = "kevohiggins/WinOCRScanner"
+
+def parse_version(v):
+    """
+    Extrae los componentes numéricos principales de la versión (Major, Minor, Patch).
+    Aísla los números ignorando prefijos o sufijos como 'v', '-rc2' o '-beta'.
+    """
+    digits = re.findall(r'\d+', v)
+    parts = [int(x) for x in digits[:3]]
+    while len(parts) < 3:
+        parts.append(0)
+    return parts
 
 def check_updates_async(parent, silent=False):
     def run():
@@ -16,13 +28,7 @@ def check_updates_async(parent, silent=False):
             req = urllib.request.Request(url, headers={'User-Agent': 'WinOCRScanner-Updater'})
             with urllib.request.urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode())
-                latest_tag = "".join([c for c in data.get("tag_name", "") if c.isdigit() or c == '.'])
-                
-                def parse_version(v):
-                    parts = [int(x) for x in v.split('.') if x.isdigit()]
-                    while len(parts) < 3:
-                        parts.append(0)
-                    return parts
+                latest_tag = data.get("tag_name", "")
                 
                 if parse_version(latest_tag) > parse_version(VERSION):
                     wx.CallAfter(show_update_dialog, parent, data)
@@ -82,21 +88,23 @@ def download_update(parent, data):
                                 last_percent = percent
                                 wx.CallAfter(prog.Update, percent, f"Descargando: {percent}%")
                                 
+                wx.CallAfter(prog.Update, 100, "Extrayendo archivos de actualización...")
+                import zipfile
+                tmp_dir = os.path.join(base_path, "update_tmp")
+                
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(tmp_dir)
+                    
                 wx.CallAfter(prog.Destroy)
-                wx.CallAfter(apply_update, base_path, zip_path)
+                wx.CallAfter(apply_update, base_path, zip_path, tmp_dir)
         except Exception as e:
             wx.CallAfter(prog.Destroy)
-            wx.CallAfter(wx.MessageBox, f"Error al descargar: {e}", "Error")
+            wx.CallAfter(wx.MessageBox, f"Error al descargar o extraer: {e}", "Error")
             
     threading.Thread(target=run, daemon=True).start()
 
-def apply_update(base_path, zip_path):
-    import zipfile
-    tmp_dir = os.path.join(base_path, "update_tmp")
-    
+def apply_update(base_path, zip_path, tmp_dir):
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(tmp_dir)
             
         items = os.listdir(tmp_dir)
         source_dir = tmp_dir

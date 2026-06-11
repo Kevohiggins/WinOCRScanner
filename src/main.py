@@ -13,7 +13,6 @@ import win32gui
 import win32con
 import win32api
 import win32process
-import psutil
 from difflib import SequenceMatcher
 
 from config import load_config, save_config, CONFIG_FILE, get_effective_config, VERSION, get_base_path
@@ -176,13 +175,21 @@ class WinOCRScanner:
             if pid == 0:
                 self._last_app_name = "Global"
                 return "Global"
-                
-            name = psutil.Process(pid).name()
-            self._last_app_name = name
-            return name
+            
+            h_process = win32api.OpenProcess(0x1000, False, pid)
+            if h_process:
+                try:
+                    path = win32process.GetModuleFileNameEx(h_process, 0)
+                    name = os.path.basename(path)
+                    self._last_app_name = name
+                    return name
+                finally:
+                    win32api.CloseHandle(h_process)
         except: 
-            self._last_app_name = "Global"
-            return "Global"
+            pass
+            
+        self._last_app_name = "Global"
+        return "Global"
 
     def _update_profile(self):
         app_name = self._get_current_app_name()
@@ -327,11 +334,16 @@ class WinOCRScanner:
                 small_gray = small_img[:, :, 1]
                 
                 LEVELS = {
-                    10:  (7, 0.10, 600),
-                    30:  (5, 0.25, 250),
-                    50:  (3, 0.50, 60),
-                    70:  (2, 0.75, 15),
-                    100: (1, 0.99, 2)
+                    10:  (7, 0.10, 600), # Nivel 1 (Mínima)
+                    20:  (6, 0.15, 400), # Nivel 2
+                    30:  (5, 0.25, 250), # Nivel 3
+                    40:  (4, 0.35, 120), # Nivel 4
+                    50:  (3, 0.50, 60),  # Nivel 5 (Medio)
+                    60:  (2, 0.65, 30),  # Nivel 6
+                    70:  (2, 0.75, 15),  # Nivel 7
+                    80:  (1, 0.85, 8),   # Nivel 8
+                    90:  (1, 0.95, 4),   # Nivel 9
+                    100: (1, 0.99, 2)    # Nivel 10 (Máxima)
                 }
                 
                 level_key = min(LEVELS.keys(), key=lambda k: abs(k - sens_val))
@@ -478,19 +490,11 @@ class WinOCRScanner:
         if self.app: wx.CallAfter(self.app.ExitMainLoop)
 
 def check_single_instance():
-    current_pid = os.getpid()
-    try:
-        me = psutil.Process(current_pid)
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-            if proc.info['pid'] == current_pid: continue
-            if proc.info['name'] == me.name():
-                if me.name().lower() in ("python.exe", "pythonw.exe"):
-                    if proc.info['cmdline'] and len(proc.info['cmdline']) > 1 and len(sys.argv) > 1:
-                        if os.path.basename(proc.info['cmdline'][1]) == os.path.basename(sys.argv[0]):
-                            return True
-                else:
-                    return True
-    except: pass
+    ERROR_ALREADY_EXISTS = 183
+    global _app_mutex
+    _app_mutex = ctypes.windll.kernel32.CreateMutexW(None, True, "Global\\WinOCRScanner_UniqueMutex")
+    if ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+        return True
     return False
 
 def main():

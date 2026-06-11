@@ -63,7 +63,10 @@ class Translator:
         service_to_warm = active_service
         if not service_to_warm:
             try:
-                from .config import load_config
+                try:
+                    from config import load_config
+                except ImportError:
+                    from .config import load_config
                 cfg = load_config()
                 service_to_warm = cfg.get("global", {}).get("translate_service", "google")
             except:

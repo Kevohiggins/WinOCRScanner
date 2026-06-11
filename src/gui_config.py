@@ -254,7 +254,9 @@ class ConfigWindow(wx.Dialog):
         
         grid.Add(wx.StaticText(self.tab_dynamic, label="Sensibilidad al cambio:"), 0, wx.ALIGN_CENTER_VERTICAL)
         self.dyn_sens = wx.Choice(self.tab_dynamic, choices=[
-            "Nivel 1 (Mínima)", "Nivel 3", "Nivel 5 (Medio)", "Nivel 7", "Nivel 10 (Máxima)"
+            "Nivel 1 (Mínima)", "Nivel 2", "Nivel 3", "Nivel 4",
+            "Nivel 5 (Medio)", "Nivel 6", "Nivel 7", "Nivel 8",
+            "Nivel 9", "Nivel 10 (Máxima)"
         ])
         grid.Add(self.dyn_sens, 1, wx.EXPAND)
         
@@ -480,8 +482,8 @@ class ConfigWindow(wx.Dialog):
         self.dyn_interval.SetValue(int(c.get("dynamic_interval", 1.0) * 10))
         
         sens_val = int(c.get("dynamic_sensitivity", 50))
-        s_map_sens = {10:0, 30:1, 50:2, 70:3, 100:4}
-        self.dyn_sens.SetSelection(s_map_sens.get(sens_val, 2))
+        s_idx = max(0, min(9, (sens_val // 10) - 1))
+        self.dyn_sens.SetSelection(s_idx)
         
         self.dyn_diff.SetValue(c.get("dynamic_diff_mode", False))
         self.dyn_interrupt.SetValue(c.get("dynamic_interrupt", False))
@@ -521,7 +523,7 @@ class ConfigWindow(wx.Dialog):
         self.temp_config["dynamic_target"] = "screen" if self.dyn_target.GetSelection() == 0 else "window"
         self.temp_config["dynamic_interval"] = self.dyn_interval.GetValue() / 10.0
         
-        s_vals_sens = [10, 30, 50, 70, 100]
+        s_vals_sens = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
         self.temp_config["dynamic_sensitivity"] = s_vals_sens[self.dyn_sens.GetSelection()]
         self.temp_config["dynamic_diff_mode"] = self.dyn_diff.GetValue()
         self.temp_config["dynamic_interrupt"] = self.dyn_interrupt.GetValue()
