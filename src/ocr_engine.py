@@ -17,6 +17,7 @@ class DetectedElement:
     y: float = 0
     w: float = 0
     h: float = 0
+    words_list: list = None
 
 class OCREngine:
     def __init__(self, config: dict):
@@ -168,10 +169,20 @@ class OCREngine:
                 continue
 
             xs, ys, max_xs, max_ys = [], [], [], []
+            line_words = []
             for w in words:
                 # CORRECCIÓN: La librería winocr usa 'bounding_rect'
                 rect = w.get('bounding_rect', {})
-                if rect:
+                w_text = w.get('text', '')
+                if rect and w_text:
+                    wx_val, wy_val = rect.get('x', 0), rect.get('y', 0)
+                    ww_val, wh_val = rect.get('width', 0), rect.get('height', 0)
+                    if scale_factor != 1.0 and scale_factor > 0:
+                        wx_val /= scale_factor
+                        wy_val /= scale_factor
+                        ww_val /= scale_factor
+                        wh_val /= scale_factor
+                    line_words.append({'text': w_text, 'x': wx_val, 'y': wy_val, 'w': ww_val, 'h': wh_val})
                     xs.append(rect.get('x', 0))
                     ys.append(rect.get('y', 0))
                     max_xs.append(rect.get('x', 0) + rect.get('width', 0))
@@ -210,7 +221,8 @@ class OCREngine:
                 x=x_min,
                 y=y_min,
                 w=w_line,
-                h=h_line
+                h=h_line,
+                words_list=line_words
             ))
 
         logger.info(f"OCREngine: Escaneo completado. Elementos procesados: {len(elements)}")

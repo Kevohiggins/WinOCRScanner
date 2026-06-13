@@ -65,11 +65,15 @@ class ConfigWindow(wx.Dialog):
         "hotkey_dynamic": "Alternar Escaneo Dinámico", "hotkey_shadow_learn": "Aprender Sombras",
         "hotkey_shadow_clear": "Borrar Sombras", "hotkey_shadow_toggle": "Activar/Desactivar Sombras",
         "key_first": "Primer Resultado", "key_skip_prev": "Retroceder 5 Resultados",
-        "key_prev": "Resultado Anterior", "key_next": "Resultado Siguiente",
+        "key_prev": "Resultado Anterior",
+        "key_word_prev": "Palabra Anterior",
+        "key_word_next": "Palabra Siguiente",
+        "key_next": "Resultado Siguiente",
         "key_skip_next": "Avanzar 5 Resultados", "key_last": "Último Resultado", 
         "key_copy": "Copiar Resultado", "key_repeat": "Repetir/Deletrear",
         "key_click": "Click Izquierdo", "key_double": "Doble Click",
         "key_right": "Click Derecho", "key_exit": "Salir de Navegación",
+        "hotkey_pdf": "Modo Documentos (PDF/EPUB)",
         "hotkey_manual": "Abrir Manual", "hotkey_toggle_auto_rescan": "Alternar Reescaneo"
     }
 

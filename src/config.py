@@ -71,7 +71,10 @@ DEFAULT_CONFIG = {
         "translate_type": "disabled",
         "translate_service": "google",
         "translate_swap": False,
-        "dynamic_interrupt": False
+        "dynamic_interrupt": False,
+        "hotkey_pdf": "ctrl+alt+p",
+        "key_word_next": "ctrl+right",
+        "key_word_prev": "ctrl+left"
     },
     "profiles": {},
     "shadow_profiles": {}

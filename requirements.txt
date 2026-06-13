@@ -2,7 +2,6 @@ winocr
 wxpython
 mss
 opencv-python
-psutil
 translators
 pywin32
 ctranslate2

@@ -13,6 +13,7 @@ Está diseñado para ser instantáneo: captura lo que tenés en pantalla y te pe
 *   **Motor Nativo:** Utiliza el reconocimiento de texto de Windows (WinRT OCR). Es muy rápido.
 *   **Ahorro de recursos:** Al no cargar modelos de IA externos pesados, es ideal para computadoras con pocos recursos o para tenerlo siempre abierto de fondo.
 *   **Traducción Integrada:** Soporta traducción online (Google, Bing, etc.) y **offline** (vía CTranslate2/Argos).
+*   **Modo Documentos (V2.0):** Transcribe y traduce documentos enteros (PDF, EPUB, DOCX) conservando la estructura en un archivo Word final, incluso procesando imágenes escaneadas.
 *   **Perfiles por Aplicación:** Guarda configuraciones específicas (recortes, idioma, sombras) para cada programa que uses.
 
 ## Descarga y Uso

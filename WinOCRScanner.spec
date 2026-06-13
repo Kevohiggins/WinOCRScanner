@@ -10,7 +10,6 @@ VENV_SP = os.path.join(sys.prefix, 'Lib', 'site-packages')
 # 1. DATOS (Archivos fijos requeridos)
 datas = [
     ('src/assets', 'src/assets'), # Iconos y sonidos
-    ('manual.html', '.'),         # El manual de usuario en la raíz
 ]
 
 datas += collect_data_files('winocr')
@@ -41,12 +40,12 @@ a = Analysis(
     hiddenimports=[
         'winocr',               # Motor OCR nativo
         'accessible_output2',   # Lector de pantalla
-        'psutil',               # Procesos activos
         'cv2',                  # OpenCV
         'translators',          # Traducción en la nube
         'ctranslate2',          # Motor offline
         'sentencepiece',        # Tokenizador
-        'js2py',                # Servicios web de Translators
+        'fitz',                 # PyMuPDF
+        'docx'                  # python-docx
     ],
     runtime_hooks=['runtime_hook_ctranslate2.py'], # Inyección de DLLs al iniciar
     excludes=[

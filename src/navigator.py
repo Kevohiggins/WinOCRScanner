@@ -73,6 +73,7 @@ class ElementNavigator:
         self.rescan_callback = rescan_callback
         self.elements = []; self.index = -1; self._hook = None; self._running = False
         self._hotkey_actions = {}
+        self.word_index = -1
 
     def _precompute_hotkeys(self):
         # Mapa de acciones basado en configuración
@@ -88,6 +89,8 @@ class ElementNavigator:
             "key_last":   ("end", self._on_last),
             "key_skip_next": ("right", lambda: self._on_skip(5)),
             "key_skip_prev": ("left", lambda: self._on_skip(-5)),
+            "key_word_next": ("ctrl+right", self._on_word_next),
+            "key_word_prev": ("ctrl+left", self._on_word_prev),
             "key_repeat": ("space", self._on_repeat)
         }
         
@@ -151,10 +154,10 @@ class ElementNavigator:
             
         return False
 
-    def _on_next(self): self.index = (self.index+1)%len(self.elements); self._announce(); return True
-    def _on_prev(self): self.index = (self.index-1)%len(self.elements); self._announce(); return True
-    def _on_first(self): self.index = 0; self._announce(); return True
-    def _on_last(self): self.index = len(self.elements) - 1; self._announce(); return True
+    def _on_next(self): self.word_index = -1; self.index = (self.index+1)%len(self.elements); self._announce(); return True
+    def _on_prev(self): self.word_index = -1; self.index = (self.index-1)%len(self.elements); self._announce(); return True
+    def _on_first(self): self.word_index = -1; self.index = 0; self._announce(); return True
+    def _on_last(self): self.word_index = -1; self.index = len(self.elements) - 1; self._announce(); return True
     
     def _on_repeat(self):
         current_time = time.time()
@@ -174,8 +177,43 @@ class ElementNavigator:
 
     def _on_skip(self, amount):
         if not self.elements: return
+        self.word_index = -1
         self.index = (self.index + amount) % len(self.elements)
         self._announce(); return True
+
+    def _on_word_next(self):
+        if not self.elements or not (0 <= self.index < len(self.elements)): return True
+        el = self.elements[self.index]
+        words = getattr(el, 'words_list', [])
+        if not words: return True
+        self.word_index += 1
+        if self.word_index >= len(words):
+            self._on_next()
+            if self.elements and (0 <= self.index < len(self.elements)):
+                next_el = self.elements[self.index]
+                if getattr(next_el, 'words_list', []):
+                    self.word_index = 0
+                    self.tts.speak(next_el.words_list[self.word_index]["text"], interrupt=True)
+            return True
+        self.tts.speak(words[self.word_index]["text"], interrupt=True)
+        return True
+
+    def _on_word_prev(self):
+        if not self.elements or not (0 <= self.index < len(self.elements)): return True
+        el = self.elements[self.index]
+        words = getattr(el, 'words_list', [])
+        if not words: return True
+        if self.word_index <= 0:
+            self._on_prev()
+            if self.elements and (0 <= self.index < len(self.elements)):
+                prev_el = self.elements[self.index]
+                if getattr(prev_el, 'words_list', []):
+                    self.word_index = len(prev_el.words_list) - 1
+                    self.tts.speak(prev_el.words_list[self.word_index]["text"], interrupt=True)
+            return True
+        self.word_index -= 1
+        self.tts.speak(words[self.word_index]["text"], interrupt=True)
+        return True
     def _on_left(self): self._click("left"); return True
     def _on_double(self): self._click("double"); return True
     def _on_right(self): self._click("right"); return True
@@ -219,8 +257,13 @@ class ElementNavigator:
             el = self.elements[self.index]
             
             # 1. Movemos el mouse físicamente a la coordenada
-            abs_x = int(self.offset_x + el.center_x)
-            abs_y = int(self.offset_y + el.center_y)
+            if getattr(self, 'word_index', -1) >= 0 and getattr(el, 'words_list', []) and self.word_index < len(el.words_list):
+                w = el.words_list[self.word_index]
+                abs_x = int(self.offset_x + w['x'] + w['w']/2.0)
+                abs_y = int(self.offset_y + w['y'] + w['h']/2.0)
+            else:
+                abs_x = int(self.offset_x + el.center_x)
+                abs_y = int(self.offset_y + el.center_y)
             user32.SetCursorPos(abs_x, abs_y)
             
             time.sleep(0.05) # Pausa micro para que el OS registre el movimiento
